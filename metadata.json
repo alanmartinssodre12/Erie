@@ -1,0 +1,8 @@
+{
+  "name": "ERIE Rede Social",
+  "description": "A comprehensive platform combining social networking, digital wallet with rewards, daily check-ins, and a private administrative control panel.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

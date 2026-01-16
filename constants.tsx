@@ -12,29 +12,31 @@ export const DEFAULT_CONFIG: SystemConfig = {
   primaryColor: '#2563eb', // Blue-600
 };
 
+// Em produção, esses mocks seriam substituídos por dados do banco.
+// Para o proprietário, garantimos que o saldo comece em zero.
 export const MOCK_USER: User = {
-  id: 'user_1',
-  name: 'João Silva',
-  email: 'joao@gmail.com',
+  id: 'user_new',
+  name: 'Usuário ERIE',
+  email: '',
   role: UserRole.USER,
-  balance: 0,
-  pendingBalance: 0,
+  balance: 0.00, // RIGOROSAMENTE ZERADO
+  pendingBalance: 0.00,
   checkInStreak: 0,
-  avatar: 'https://picsum.photos/seed/joao/200',
+  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Erie',
   createdAt: new Date().toISOString(),
   status: 'active',
   loginType: 'email'
 };
 
 export const MOCK_ADMIN: User = {
-  id: 'admin_1',
+  id: 'admin_master',
   name: ADMIN_OWNER_NAME,
   email: 'admin@erie.com',
   role: UserRole.ADMIN,
-  balance: 0,
-  pendingBalance: 0,
+  balance: 0.00,
+  pendingBalance: 0.00,
   checkInStreak: 0,
-  createdAt: '2023-01-01T08:00:00Z',
+  createdAt: new Date().toISOString(),
   status: 'active',
   loginType: 'email'
 };

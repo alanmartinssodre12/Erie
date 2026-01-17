@@ -17,6 +17,7 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
+  bio?: string;
   role: UserRole;
   avatar?: string;
   balance: number;
@@ -26,6 +27,29 @@ export interface User {
   createdAt: string;
   status: 'active' | 'suspended' | 'blocked';
   loginType: 'google' | 'email';
+  totalAdsWatched: number;
+  fraudScore: number;
+}
+
+export interface Post {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  content: string;
+  imageUrl?: string;
+  likes: string[]; // IDs dos usuários que curtiram
+  comments: PostComment[];
+  timestamp: string;
+  type: 'feed' | 'reel';
+}
+
+export interface PostComment {
+  id: string;
+  userId: string;
+  userName: string;
+  content: string;
+  timestamp: string;
 }
 
 export interface Message {
@@ -35,6 +59,7 @@ export interface Message {
   content: string;
   type: 'text' | 'image' | 'audio';
   timestamp: string;
+  read: boolean;
 }
 
 export interface Transaction {
@@ -45,5 +70,15 @@ export interface Transaction {
   type: 'reward' | 'withdrawal' | 'checkin';
   status: 'pending' | 'completed' | 'rejected';
   method?: 'Pix' | 'PayPal' | 'PagBank';
+  pixKey?: string;
   date: string;
+}
+
+export interface SystemStats {
+  totalUsers: number;
+  activeToday: number;
+  totalAds: number;
+  totalRevenue: number;
+  totalPaid: number;
+  fraudAlerts: number;
 }

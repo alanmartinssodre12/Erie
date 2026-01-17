@@ -1,156 +1,224 @@
 
-import React, { useState } from 'react';
-import { User as UserType } from '../types.ts';
+import React, { useState, useEffect } from 'react';
+import { User as UserType, Post, PostComment } from '../types.ts';
 import { 
-  Calendar, Play, TrendingUp, Star, Gift, ShieldAlert, 
-  Heart, MessageCircle, Share2, PlusSquare, PlayCircle,
-  Flame, Award
+  Heart, MessageCircle, Share2, Award, Flame, PlusSquare, Image as ImageIcon, Send, X
 } from 'lucide-react';
 
 interface HomeProps {
   user: UserType;
-  setUser: React.Dispatch<React.SetStateAction<UserType | null>>;
+  setUser: (u: UserType) => void;
 }
 
 const Home: React.FC<HomeProps> = ({ user, setUser }) => {
   const [tab, setTab] = useState<'feed' | 'reels'>('feed');
-  const [checkingIn, setCheckingIn] = useState(false);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [newPostContent, setNewPostContent] = useState('');
+  const [isCreatingPost, setIsCreatingPost] = useState(false);
+  const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
+  const [commentText, setCommentText] = useState('');
 
-  const handleCheckIn = () => {
-    setCheckingIn(true);
-    setTimeout(() => {
-      setUser(prev => prev ? {
-        ...prev,
-        balance: prev.balance + 0.50,
-        checkInStreak: prev.checkInStreak + 1,
-        lastCheckIn: new Date().toISOString()
-      } : null);
-      setCheckingIn(false);
-    }, 1200);
+  useEffect(() => {
+    const savedPosts = JSON.parse(localStorage.getItem('erie_posts') || '[]');
+    setPosts(savedPosts);
+  }, []);
+
+  const savePosts = (updatedPosts: Post[]) => {
+    setPosts(updatedPosts);
+    localStorage.setItem('erie_posts', JSON.stringify(updatedPosts));
+  };
+
+  const handleCreatePost = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPostContent.trim()) return;
+
+    const newPost: Post = {
+      id: 'post_' + Date.now(),
+      userId: user.id,
+      userName: user.name,
+      userAvatar: user.avatar,
+      content: newPostContent,
+      likes: [],
+      comments: [],
+      timestamp: new Date().toISOString(),
+      type: 'feed'
+    };
+
+    savePosts([newPost, ...posts]);
+    setNewPostContent('');
+    setIsCreatingPost(false);
+  };
+
+  const toggleLike = (postId: string) => {
+    const updated = posts.map(p => {
+      if (p.id === postId) {
+        const hasLiked = p.likes.includes(user.id);
+        return {
+          ...p,
+          likes: hasLiked ? p.likes.filter(id => id !== user.id) : [...p.likes, user.id]
+        };
+      }
+      return p;
+    });
+    savePosts(updated);
+  };
+
+  const handleAddComment = (postId: string) => {
+    if (!commentText.trim()) return;
+    const updated = posts.map(p => {
+      if (p.id === postId) {
+        const newComment: PostComment = {
+          id: 'comm_' + Date.now(),
+          userId: user.id,
+          userName: user.name,
+          content: commentText,
+          timestamp: new Date().toISOString()
+        };
+        return { ...p, comments: [...p.comments, newComment] };
+      }
+      return p;
+    });
+    savePosts(updated);
+    setCommentText('');
+    setActiveCommentId(null);
+  };
+
+  const handleShare = async (post: Post) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Post de ' + post.userName + ' no ERIE',
+          text: post.content,
+          url: window.location.href,
+        });
+      } catch (err) {
+        console.log('Erro ao compartilhar');
+      }
+    } else {
+      alert('Link copiado para a área de transferência!');
+    }
   };
 
   return (
-    <div className="min-h-full pb-20">
-      {/* Tab Selector */}
-      <div className="flex items-center justify-center bg-white sticky top-0 z-40 border-b border-slate-50">
-        <button 
-          onClick={() => setTab('feed')}
-          className={`px-6 py-3 text-sm font-bold transition-all relative ${tab === 'feed' ? 'text-blue-600' : 'text-slate-400'}`}
-        >
-          Feed
-          {tab === 'feed' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></div>}
+    <div className="min-h-full pb-20 bg-slate-50">
+      {/* Header Tabs */}
+      <div className="flex items-center justify-center bg-white sticky top-0 z-40 border-b border-slate-100">
+        <button onClick={() => setTab('feed')} className={`px-8 py-4 text-sm font-black transition-all relative ${tab === 'feed' ? 'text-blue-600' : 'text-slate-400'}`}>
+          FEED {tab === 'feed' && <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 rounded-t-full"></div>}
         </button>
-        <button 
-          onClick={() => setTab('reels')}
-          className={`px-6 py-3 text-sm font-bold transition-all relative ${tab === 'reels' ? 'text-blue-600' : 'text-slate-400'}`}
-        >
-          Reels
-          {tab === 'reels' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></div>}
+        <button onClick={() => setTab('reels')} className={`px-8 py-4 text-sm font-black transition-all relative ${tab === 'reels' ? 'text-blue-600' : 'text-slate-400'}`}>
+          REELS {tab === 'reels' && <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 rounded-t-full"></div>}
         </button>
       </div>
 
       {tab === 'feed' ? (
-        <div className="p-4 space-y-6 animate-in slide-in-from-left-2 duration-300">
-          {/* Daily Check-in Compact */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 rounded-2xl shadow-lg text-white flex items-center justify-between">
+        <div className="p-4 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {/* Create Post Area */}
+          <div className="bg-white rounded-[2rem] p-4 shadow-sm border border-slate-100 mb-6">
             <div className="flex items-center gap-3">
-              <div className="bg-white/20 p-2 rounded-lg"><Award size={24} /></div>
-              <div>
-                <p className="text-[10px] font-bold opacity-80 uppercase tracking-tighter">Missão Diária</p>
-                <p className="text-sm font-bold">Check-in: Dia {user.checkInStreak + 1}</p>
-              </div>
+              <img src={user.avatar} className="w-10 h-10 rounded-full bg-slate-100" />
+              <button 
+                onClick={() => setIsCreatingPost(true)}
+                className="flex-1 text-left bg-slate-50 text-slate-400 py-3 px-5 rounded-2xl text-sm font-medium border border-slate-100 hover:bg-slate-100 transition-colors"
+              >
+                No que você está pensando, {user.name.split(' ')[0]}?
+              </button>
             </div>
-            <button 
-              disabled={checkingIn}
-              onClick={handleCheckIn}
-              className="bg-white text-blue-600 text-xs font-black px-4 py-2 rounded-full shadow-md active:scale-95 disabled:opacity-50"
-            >
-              {checkingIn ? '...' : 'COLETAR'}
-            </button>
           </div>
 
-          {/* Social Feed Posts */}
-          {[1, 2, 3].map(i => (
-            <div key={i} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100">
-              <div className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <img src={`https://picsum.photos/seed/${i+50}/100`} className="w-10 h-10 rounded-full border border-slate-100" />
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">Criador_Erie_{i}</p>
-                    <p className="text-[10px] text-slate-400 font-medium">Postado há {i*10} min • 🔥 Trending</p>
-                  </div>
-                </div>
-                <button className="text-blue-600 font-bold text-xs px-3 py-1 bg-blue-50 rounded-full">Seguir</button>
-              </div>
-              <div className="aspect-square bg-slate-50">
-                <img src={`https://picsum.photos/seed/post${i+100}/800/800`} className="w-full h-full object-cover" />
-              </div>
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-4 text-slate-700">
-                    <button className="flex items-center gap-1.5 active:scale-125 transition-transform"><Heart size={22} /><span className="text-xs font-bold">{i*42}</span></button>
-                    <button className="flex items-center gap-1.5"><MessageCircle size={22} /><span className="text-xs font-bold">{i*12}</span></button>
-                    <button className="active:scale-110 transition-transform"><Share2 size={22} /></button>
-                  </div>
-                  <div className="flex items-center gap-1 text-orange-500 bg-orange-50 px-2 py-0.5 rounded-md">
-                    <Flame size={14} fill="currentColor" />
-                    <span className="text-[10px] font-black">+R$ 0,02</span>
-                  </div>
-                </div>
-                <p className="text-sm text-slate-600 line-clamp-2">
-                  <span className="font-bold text-slate-800 mr-2">Criador_Erie_{i}</span>
-                  Incrível como o novo sistema de recompensas do ERIE está funcionando! Já fiz meu primeiro saque via Pix hoje. 🚀 #ERIE #Monetização
-                </p>
-              </div>
+          {posts.length === 0 ? (
+            <div className="py-20 text-center flex flex-col items-center opacity-30">
+              <PlusSquare size={48} className="mb-4" />
+              <p className="font-bold text-sm italic">Nenhuma publicação ainda.<br/>Seja o primeiro a postar!</p>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="h-[calc(100vh-100px)] bg-black relative flex flex-col animate-in slide-in-from-right-2 duration-300">
-          {/* Simulated Vertical Video Player */}
-          <div className="flex-1 overflow-hidden relative">
-            <img src="https://picsum.photos/seed/reels1/1080/1920" className="w-full h-full object-cover opacity-80" />
-            
-            {/* Reel UI Overlay */}
-            <div className="absolute inset-0 flex flex-col justify-end p-6 text-white bg-gradient-to-t from-black/80 via-transparent to-transparent">
-              <div className="flex items-end justify-between">
-                <div className="flex-1 space-y-3 mb-4">
-                  <div className="flex items-center gap-2">
-                    <img src="https://picsum.photos/seed/auth1/100" className="w-10 h-10 rounded-full border-2 border-white shadow-xl" />
-                    <span className="font-bold text-sm shadow-sm">Alan_ERIE</span>
-                    <button className="text-[10px] font-bold bg-blue-600 px-2 py-1 rounded-md">SEGUE</button>
-                  </div>
-                  <p className="text-xs leading-relaxed max-w-[80%] shadow-sm">Testando os novos efeitos visuais do ERIE Super App. A qualidade está incrível! 🔥🎬 #Reels #AI</p>
-                  <div className="flex items-center gap-2">
-                    <div className="bg-white/20 p-1 rounded-md animate-bounce"><Award size={14} /></div>
-                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Ganhando R$ 0,01 por visualização</span>
+          ) : (
+            posts.map(post => (
+              <div key={post.id} className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-slate-100">
+                <div className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <img src={post.userAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.userName}`} className="w-10 h-10 rounded-full border border-slate-100" />
+                    <div>
+                      <p className="text-sm font-black text-slate-800 tracking-tight">{post.userName}</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">há pouco</p>
+                    </div>
                   </div>
                 </div>
                 
-                <div className="flex flex-col gap-6 items-center">
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="bg-white/10 p-3 rounded-full backdrop-blur-md active:scale-125 transition-transform"><Heart size={24} fill="white" /></div>
-                    <span className="text-[10px] font-bold">12.4K</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="bg-white/10 p-3 rounded-full backdrop-blur-md"><MessageCircle size={24} fill="white" /></div>
-                    <span className="text-[10px] font-bold">856</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="bg-white/10 p-3 rounded-full backdrop-blur-md"><Share2 size={24} fill="white" /></div>
-                    <span className="text-[10px] font-bold">2.1K</span>
-                  </div>
-                  <div className="w-10 h-10 bg-slate-800 rounded-lg border-2 border-white/50 animate-spin-slow overflow-hidden">
-                    <img src="https://picsum.photos/seed/music/50" className="w-full h-full object-cover" />
+                <div className="px-5 pb-4">
+                   <p className="text-sm text-slate-700 leading-relaxed font-medium">{post.content}</p>
+                </div>
+
+                <div className="px-4 py-3 border-t border-slate-50 flex items-center justify-between">
+                  <div className="flex items-center gap-5">
+                    <button 
+                      onClick={() => toggleLike(post.id)}
+                      className={`flex items-center gap-1.5 transition-all ${post.likes.includes(user.id) ? 'text-red-500 scale-110' : 'text-slate-500'}`}
+                    >
+                      <Heart size={20} fill={post.likes.includes(user.id) ? 'currentColor' : 'none'} />
+                      <span className="text-xs font-black">{post.likes.length}</span>
+                    </button>
+                    <button 
+                      onClick={() => setActiveCommentId(activeCommentId === post.id ? null : post.id)}
+                      className="flex items-center gap-1.5 text-slate-500"
+                    >
+                      <MessageCircle size={20} />
+                      <span className="text-xs font-black">{post.comments.length}</span>
+                    </button>
+                    <button onClick={() => handleShare(post)} className="text-slate-500"><Share2 size={20} /></button>
                   </div>
                 </div>
+
+                {/* Comment Section */}
+                {activeCommentId === post.id && (
+                  <div className="p-4 bg-slate-50/50 border-t border-slate-50 space-y-3">
+                    {post.comments.map(c => (
+                      <div key={c.id} className="flex gap-2">
+                        <div className="bg-white p-2.5 rounded-2xl rounded-tl-none shadow-sm flex-1">
+                          <p className="text-[10px] font-black text-blue-600 mb-0.5">{c.userName}</p>
+                          <p className="text-xs text-slate-700 font-medium">{c.content}</p>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="flex gap-2 pt-2">
+                      <input 
+                        type="text" 
+                        value={commentText}
+                        onChange={e => setCommentText(e.target.value)}
+                        placeholder="Escreva um comentário..."
+                        className="flex-1 bg-white border border-slate-100 rounded-xl py-2 px-4 text-xs outline-none focus:ring-2 focus:ring-blue-500/20"
+                      />
+                      <button onClick={() => handleAddComment(post.id)} className="bg-blue-600 text-white p-2 rounded-xl"><Send size={16}/></button>
+                    </div>
+                  </div>
+                )}
               </div>
+            ))
+          )}
+        </div>
+      ) : (
+        <div className="h-[calc(100vh-120px)] bg-black relative flex flex-col items-center justify-center">
+            <p className="text-white/30 font-black italic text-sm tracking-widest uppercase animate-pulse">Nenhum Reel disponível no momento</p>
+        </div>
+      )}
+
+      {/* Post Creator Modal */}
+      {isCreatingPost && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end md:items-center justify-center p-4">
+          <div className="bg-white w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl animate-in slide-in-from-bottom-10">
+            <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+               <h3 className="font-black text-lg tracking-tight">Nova Publicação</h3>
+               <button onClick={() => setIsCreatingPost(false)} className="p-2 text-slate-400"><X/></button>
             </div>
-            
-            {/* Progress Bar */}
-            <div className="absolute bottom-0 left-0 h-1 bg-white/30 w-full overflow-hidden">
-              <div className="h-full bg-blue-500 animate-progress"></div>
-            </div>
+            <form onSubmit={handleCreatePost} className="p-6 space-y-4">
+              <textarea 
+                autoFocus
+                value={newPostContent}
+                onChange={e => setNewPostContent(e.target.value)}
+                placeholder="O que está acontecendo?"
+                className="w-full min-h-[120px] bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+              <button className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-200">POSTAR AGORA</button>
+            </form>
           </div>
         </div>
       )}

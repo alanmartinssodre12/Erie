@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, UserRole } from '../types';
-import { MOCK_USER } from '../constants';
+import { User, UserRole } from '../types.ts';
+import { MOCK_USER } from '../constants.tsx';
 import { User as UserIcon, Mail, Lock, Phone } from 'lucide-react';
 
 interface RegisterProps {
@@ -52,59 +52,14 @@ const Register: React.FC<RegisterProps> = ({ onLogin }) => {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Nome completo"
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 outline-none"
           />
         </div>
-
-        <div className="relative">
-          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-          <input 
-            type="email" 
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="E-mail"
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-          />
-        </div>
-
-        <div className="relative">
-          <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-          <input 
-            type="tel" 
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="Telefone (opcional)"
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-          />
-        </div>
-
-        <div className="relative">
-          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-          <input 
-            type="password" 
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Senha"
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-          />
-        </div>
-
-        <div className="text-xs text-slate-500 px-2">
-            Ao se cadastrar, você concorda com nossos <span className="text-blue-600 font-bold">Termos de Uso</span> e <span className="text-blue-600 font-bold">Política de Privacidade</span>.
-        </div>
-
         <button 
           type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-2"
+          className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg"
         >
-          {loading ? (
-             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          ) : (
-            'Criar Conta'
-          )}
+          Criar Conta
         </button>
       </form>
 

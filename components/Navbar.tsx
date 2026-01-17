@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { User, UserRole } from '../types';
+import { User, UserRole } from '../types.ts';
 import { LogOut, ShieldCheck, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

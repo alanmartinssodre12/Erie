@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { User as UserType } from '../types';
+import { User as UserType } from '../types.ts';
 import { 
   Calendar, Play, TrendingUp, Star, Gift, ShieldAlert, 
   Heart, MessageCircle, Share2, PlusSquare, PlayCircle,

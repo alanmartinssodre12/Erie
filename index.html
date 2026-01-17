@@ -5,7 +5,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ERIE - Super App Master</title>
-    <!-- Tailwind Play CDN com configuração de supressão de aviso para fins de demonstração robusta -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>E</text></svg>">
+    
+    <script>
+      // Polyfill para compatibilidade básica
+      window.process = { env: { API_KEY: "" } };
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -14,52 +20,55 @@
             animation: {
               'spin-slow': 'spin 3s linear infinite',
               'progress': 'progress 2s ease-in-out infinite',
-              'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
             },
             keyframes: {
               progress: {
                 '0%': { transform: 'translateX(-100%)' },
                 '100%': { transform: 'translateX(100%)' },
-              },
-              shake: {
-                '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
-                '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
-                '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
-                '40%, 60%': { transform: 'translate3d(4px, 0, 0)' },
               }
             }
           }
         }
       }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
       body {
         font-family: 'Inter', sans-serif;
-        background-color: #020617; /* Slate-950 para evitar flash branco */
-        color: #f8fafc;
+        background-color: #020617;
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
       }
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      
-      /* Ocultar aviso do Tailwind CDN em produção via CSS se necessário */
-      #tailwind-cdn-warning { display: none !important; }
+      #root {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.12.0",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "recharts": "https://esm.sh/recharts@^3.6.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.37.0"
-  }
-}
-</script>
-</head>
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@19.0.0",
+        "react/": "https://esm.sh/react@19.0.0/",
+        "react-dom": "https://esm.sh/react-dom@19.0.0",
+        "react-dom/": "https://esm.sh/react-dom@19.0.0/",
+        "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+        "react-router-dom": "https://esm.sh/react-router-dom@7.1.0?deps=react@19.0.0,react-dom@19.0.0",
+        "lucide-react": "https://esm.sh/lucide-react@0.474.0?deps=react@19.0.0",
+        "recharts": "https://esm.sh/recharts@2.15.0?deps=react@19.0.0,react-dom@19.0.0",
+        "@google/genai": "https://esm.sh/@google/genai@0.8.0"
+      }
+    }
+    </script>
+  </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div style="color: #3b82f6; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; font-weight: bold; background: #020617;">
+        INICIALIZANDO NÚCLEO ERIE...
+      </div>
+    </div>
+    <script type="module" src="index.tsx"></script>
   </body>
 </html>

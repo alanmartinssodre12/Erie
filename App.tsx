@@ -1,22 +1,22 @@
 
 import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { User, UserRole } from './types';
-import { MOCK_USER, MOCK_ADMIN } from './constants';
+import { User, UserRole } from './types.ts';
+import { MOCK_USER, MOCK_ADMIN } from './constants.tsx';
 
 // Pages
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Home from './pages/Home';
-import ChatRoom from './pages/ChatRoom';
-import Wallet from './pages/Wallet';
-import AdminDashboard from './pages/AdminDashboard';
-import AdminLogin from './pages/AdminLogin';
-import PasswordRecovery from './pages/PasswordRecovery';
+import Login from './pages/Login.tsx';
+import Register from './pages/Register.tsx';
+import Home from './pages/Home.tsx';
+import ChatRoom from './pages/ChatRoom.tsx';
+import Wallet from './pages/Wallet.tsx';
+import AdminDashboard from './pages/AdminDashboard.tsx';
+import AdminLogin from './pages/AdminLogin.tsx';
+import PasswordRecovery from './pages/PasswordRecovery.tsx';
 
 // Components
-import Navbar from './components/Navbar';
-import BottomNav from './components/BottomNav';
+import Navbar from './components/Navbar.tsx';
+import BottomNav from './components/BottomNav.tsx';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -42,15 +42,11 @@ const App: React.FC = () => {
     <HashRouter>
       <div className="min-h-screen bg-slate-50 flex flex-col max-w-md mx-auto shadow-2xl relative border-x border-slate-200">
         <Routes>
-          {/* Public Routes */}
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
           <Route path="/register" element={<Register onLogin={handleLogin} />} />
           <Route path="/recovery" element={<PasswordRecovery />} />
-          
-          {/* Rota Secreta de Acesso Admin - URL Privada */}
           <Route path="/admin-access-erie" element={<AdminLogin onLogin={handleLogin} />} />
 
-          {/* User Routes */}
           <Route
             path="/"
             element={
@@ -86,7 +82,6 @@ const App: React.FC = () => {
             }
           />
 
-          {/* Admin Dashboard Protected */}
           <Route
             path="/admin-panel-erie-1986"
             element={

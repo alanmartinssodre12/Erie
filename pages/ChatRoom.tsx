@@ -1,9 +1,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { User, Message } from '../types.ts';
+import { User, Message, ChatThread } from '../types.ts';
 import { 
   ChevronLeft, Send, Image as ImageIcon, Mic, Phone, 
-  Video, MoreVertical, X, PhoneOff, Check, User as UserIcon
+  Video, X, Check, Search, Plus, UserPlus, AtSign
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -17,36 +17,81 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ user }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [activeCall, setActiveCall] = useState<'voice' | 'video' | null>(null);
-  const [callTimer, setCallTimer] = useState(0);
   
+  // New Chat States
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<User[]>([]);
+  const [threads, setThreads] = useState<ChatThread[]>([]);
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Carregar Threads (conversas ativas)
+    const allUsers = JSON.parse(localStorage.getItem('erie_all_users') || '[]');
     const allMessages = JSON.parse(localStorage.getItem('erie_messages') || '[]');
-    // Filtrar mensagens para esta conversa (simulada)
-    const filtered = allMessages.filter((m: Message) => 
-      (m.senderId === user.id && m.receiverId === id) || 
-      (m.senderId === id && m.receiverId === user.id)
-    );
-    setMessages(filtered);
+    
+    // Simular agrupamento de mensagens em threads
+    const userThreadsMap = new Map<string, ChatThread>();
+    
+    allMessages.forEach((m: Message) => {
+      if (m.senderId === user.id || m.receiverId === user.id) {
+        const otherId = m.senderId === user.id ? m.receiverId : m.senderId;
+        const otherUser = allUsers.find((u: User) => u.id === otherId);
+        
+        if (otherUser) {
+          userThreadsMap.set(otherId, {
+            participantId: otherUser.id,
+            participantName: otherUser.name,
+            participantUsername: otherUser.username,
+            participantAvatar: otherUser.avatar,
+            lastMessage: m.content,
+            timestamp: m.timestamp,
+            unreadCount: 0 // Mock simples
+          });
+        }
+      }
+    });
+
+    setThreads(Array.from(userThreadsMap.values()).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+
+    // Se estiver em uma sala específica, carregar mensagens
+    if (id && id !== 'list') {
+      const filtered = allMessages.filter((m: Message) => 
+        (m.senderId === user.id && m.receiverId === id) || 
+        (m.senderId === id && m.receiverId === user.id)
+      );
+      setMessages(filtered);
+    }
   }, [id, user.id]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  useEffect(() => {
-    let interval: any;
-    if (activeCall) {
-      interval = setInterval(() => setCallTimer(prev => prev + 1), 1000);
-    } else {
-      setCallTimer(0);
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    if (!term.trim()) {
+      setSearchResults([]);
+      return;
     }
-    return () => clearInterval(interval);
-  }, [activeCall]);
+    const allUsers = JSON.parse(localStorage.getItem('erie_all_users') || '[]');
+    const filtered = allUsers.filter((u: User) => 
+      u.id !== user.id && 
+      (u.email.toLowerCase().includes(term.toLowerCase()) || 
+       u.username.toLowerCase().includes(term.toLowerCase()))
+    );
+    setSearchResults(filtered);
+  };
+
+  const startChat = (targetUser: User) => {
+    setShowNewChat(false);
+    navigate(`/chat/${targetUser.id}`);
+  };
 
   const handleSendMessage = (content: string) => {
-    if (!content.trim()) return;
+    if (!content.trim() || id === 'list') return;
+    
     const newMessage: Message = {
       id: 'msg_' + Date.now(),
       senderId: user.id,
@@ -58,66 +103,116 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ user }) => {
     };
 
     const allMessages = JSON.parse(localStorage.getItem('erie_messages') || '[]');
-    const updated = [...allMessages, newMessage];
-    localStorage.setItem('erie_messages', JSON.stringify(updated));
+    localStorage.setItem('erie_messages', JSON.stringify([...allMessages, newMessage]));
     setMessages(prev => [...prev, newMessage]);
     setInputText('');
   };
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
-
   if (id === 'list') {
     return (
-      <div className="h-full flex flex-col bg-white">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
-          <h2 className="text-2xl font-black italic tracking-tighter">MENSAGENS</h2>
+      <div className="h-full flex flex-col bg-white animate-in fade-in duration-300">
+        <div className="p-6 border-b border-slate-50 flex items-center justify-between sticky top-0 bg-white z-10">
+          <h2 className="text-3xl font-black tracking-tighter italic">CHATS</h2>
+          <button 
+            onClick={() => setShowNewChat(true)}
+            className="bg-blue-600 text-white p-3 rounded-2xl shadow-lg shadow-blue-100 active:scale-90 transition-transform flex items-center gap-2"
+          >
+            <Plus size={20} />
+            <span className="text-xs font-black uppercase">Novo</span>
+          </button>
         </div>
-        <div className="flex-1 overflow-y-auto pb-20 no-scrollbar p-2">
-          {/* Mocked conversation list based on "real" system logic */}
-          <div className="p-10 text-center opacity-30 flex flex-col items-center">
-             <UserIcon size={48} className="mb-2" />
-             <p className="text-sm font-bold italic">Você ainda não tem conversas.</p>
+
+        <div className="flex-1 overflow-y-auto pb-32 no-scrollbar">
+          {threads.length === 0 ? (
+            <div className="py-32 text-center opacity-20 flex flex-col items-center">
+               <UserPlus size={64} className="mb-4" />
+               <p className="font-black italic text-sm uppercase tracking-widest">Inicie sua primeira conversa.</p>
+            </div>
+          ) : (
+            threads.map(thread => (
+              <button 
+                key={thread.participantId}
+                onClick={() => navigate(`/chat/${thread.participantId}`)}
+                className="w-full p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors border-b border-slate-50"
+              >
+                <img src={thread.participantAvatar} className="w-14 h-14 rounded-full border-2 border-slate-100" />
+                <div className="flex-1 text-left">
+                  <div className="flex justify-between items-center">
+                    <p className="font-black text-slate-800">{thread.participantName}</p>
+                    <span className="text-[10px] text-slate-400 font-bold">{new Date(thread.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                  </div>
+                  <p className="text-[10px] text-blue-600 font-black mb-1">@{thread.participantUsername}</p>
+                  <p className="text-sm text-slate-400 line-clamp-1 font-medium">{thread.lastMessage}</p>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+
+        {/* Modal de Nova Conversa */}
+        {showNewChat && (
+          <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-end md:items-center justify-center p-4">
+            <div className="bg-white w-full max-w-lg rounded-[3rem] overflow-hidden shadow-2xl animate-in slide-in-from-bottom-20 duration-300">
+              <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+                <h3 className="font-black text-xl tracking-tight">NOVA CONVERSA</h3>
+                <button onClick={() => {setShowNewChat(false); setSearchResults([]); setSearchTerm('');}} className="p-2 text-slate-400 bg-slate-50 rounded-full hover:bg-slate-100"><X size={20}/></button>
+              </div>
+              <div className="p-6">
+                 <div className="relative mb-6">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                    <input 
+                      type="text"
+                      autoFocus
+                      placeholder="Buscar por E-mail ou @username"
+                      value={searchTerm}
+                      onChange={(e) => handleSearch(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/10"
+                    />
+                 </div>
+                 
+                 <div className="max-h-80 overflow-y-auto space-y-2 no-scrollbar">
+                    {searchResults.map(result => (
+                      <button 
+                        key={result.id}
+                        onClick={() => startChat(result)}
+                        className="w-full p-4 flex items-center gap-4 rounded-3xl border border-slate-50 hover:bg-blue-50 transition-colors group"
+                      >
+                         <img src={result.avatar} className="w-12 h-12 rounded-full border border-white" />
+                         <div className="text-left flex-1">
+                            <p className="font-black text-sm text-slate-800">{result.name}</p>
+                            <p className="text-xs text-blue-600 font-bold italic">@{result.username}</p>
+                         </div>
+                         <Plus size={20} className="text-slate-300 group-hover:text-blue-600" />
+                      </button>
+                    ))}
+                    {searchTerm && searchResults.length === 0 && (
+                      <div className="p-10 text-center opacity-40">
+                         <p className="text-xs font-black uppercase tracking-widest">Nenhum usuário encontrado.</p>
+                      </div>
+                    )}
+                 </div>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   }
 
+  // Visualização de Conversa Aberta
+  const otherParticipant = JSON.parse(localStorage.getItem('erie_all_users') || '[]').find((u: User) => u.id === id);
+
   return (
     <div className="h-full flex flex-col bg-[#efeae2] relative overflow-hidden">
-      {/* Call UI Layer */}
-      {activeCall && (
-        <div className="fixed inset-0 z-[100] bg-slate-900 flex flex-col items-center justify-between p-12 text-white animate-in zoom-in duration-300">
-           <div className="text-center space-y-4">
-              <div className="w-32 h-32 bg-slate-800 rounded-full mx-auto flex items-center justify-center border-4 border-white/10 shadow-2xl">
-                 <UserIcon size={64} className="text-slate-600" />
-              </div>
-              <h2 className="text-2xl font-black">Contato Teste</h2>
-              <p className="text-sm font-bold text-blue-400 uppercase tracking-widest">{formatTime(callTimer)}</p>
-           </div>
-           
-           <div className="flex gap-8">
-              <button onClick={() => setActiveCall(null)} className="bg-red-500 w-16 h-16 rounded-full flex items-center justify-center shadow-2xl shadow-red-900/50 active:scale-90 transition-transform">
-                 <PhoneOff size={28} />
-              </button>
-           </div>
-        </div>
-      )}
-
-      {/* Chat Header */}
       <div className="bg-white p-4 flex items-center gap-3 shadow-sm z-40 sticky top-0 border-b border-slate-100">
         <button onClick={() => navigate('/chat/list')} className="text-blue-600 p-1">
             <ChevronLeft size={28} />
         </button>
         <div className="flex flex-1 items-center gap-3">
-            <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center font-black text-slate-400">?</div>
+            <img src={otherParticipant?.avatar || ''} className="w-10 h-10 rounded-full border border-slate-100" />
             <div className="flex-1">
-              <h3 className="text-sm font-black text-slate-800 tracking-tight">Contato Teste</h3>
-              <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Online agora</p>
+              <h3 className="text-sm font-black text-slate-800 tracking-tight">{otherParticipant?.name || 'Carregando...'}</h3>
+              <p className="text-[10px] text-blue-600 font-black uppercase tracking-wider">@{otherParticipant?.username}</p>
             </div>
         </div>
         <div className="flex items-center gap-2">
@@ -126,13 +221,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ user }) => {
         </div>
       </div>
 
-      {/* Chat Body */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar pb-6 bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-repeat opacity-90">
-        {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full opacity-20">
-             <p className="text-xs font-black uppercase tracking-[0.3em]">Criptografia de ponta-a-ponta</p>
-          </div>
-        )}
         {messages.map((msg) => (
           <div key={msg.id} className={`flex ${msg.senderId === user.id ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[80%] p-3 rounded-2xl shadow-sm relative group ${msg.senderId === user.id ? 'bg-[#dcf8c6] rounded-tr-none' : 'bg-white rounded-tl-none'}`}>
@@ -147,7 +236,6 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ user }) => {
         <div ref={scrollRef} />
       </div>
 
-      {/* Chat Input */}
       <div className="p-4 bg-white flex items-center gap-3 border-t border-slate-100 z-30">
         <button className="text-slate-400"><ImageIcon size={22} /></button>
         <button className="text-slate-400"><Mic size={22} /></button>
@@ -156,7 +244,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ user }) => {
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(inputText)}
-          placeholder="Mensagem..."
+          placeholder="Escreva algo..."
           className="flex-1 bg-slate-50 border border-slate-100 rounded-2xl py-3 px-5 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20"
         />
         <button 

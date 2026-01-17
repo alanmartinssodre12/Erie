@@ -1,7 +1,8 @@
 
 import { User, UserRole, SystemConfig } from './types.ts';
 
-export const ADMIN_IDENTIFIER = 'Erie1986123@';
+export const ADMIN_EMAIL = 'alanmarttinssodre1251@gmail.com';
+export const ADMIN_IDENTIFIER = 'AErie2143658709@';
 export const ADMIN_OWNER_NAME = 'Alan Martins Sodré';
 
 export const DEFAULT_CONFIG: SystemConfig = {
@@ -14,6 +15,7 @@ export const DEFAULT_CONFIG: SystemConfig = {
 
 export const MOCK_USER: User = {
   id: 'user_new',
+  username: 'usuario_erie',
   name: 'Usuário ERIE',
   email: '',
   role: UserRole.USER,
@@ -25,13 +27,19 @@ export const MOCK_USER: User = {
   status: 'active',
   loginType: 'email',
   totalAdsWatched: 0,
-  fraudScore: 0
+  fraudScore: 0,
+  settings: {
+    notifications: true,
+    privateProfile: false,
+    twoFactor: false
+  }
 };
 
 export const MOCK_ADMIN: User = {
   id: 'admin_master',
+  username: 'alan_erie',
   name: ADMIN_OWNER_NAME,
-  email: 'admin@erie.com',
+  email: ADMIN_EMAIL,
   role: UserRole.ADMIN,
   balance: 0.00,
   pendingBalance: 0.00,
@@ -40,5 +48,10 @@ export const MOCK_ADMIN: User = {
   status: 'active',
   loginType: 'email',
   totalAdsWatched: 0,
-  fraudScore: 0
+  fraudScore: 0,
+  settings: {
+    notifications: true,
+    privateProfile: true,
+    twoFactor: true
+  }
 };

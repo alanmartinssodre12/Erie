@@ -86,20 +86,23 @@ const BottomNav: React.FC<BottomNavProps> = ({ user, setUser }) => {
       </div>
 
       {showAd && (
-        <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6 text-white">
-          <div className="absolute top-8 right-8 bg-white/10 px-4 py-2 rounded-full text-[11px] font-black uppercase tracking-widest border border-white/5">
-            Ganhando R$ 0,15 em {Math.ceil((100 - adProgress)/20)}s
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-white">
+          <div className="absolute top-8 right-8 bg-zinc-800 px-4 py-2 rounded-full text-[11px] font-black uppercase tracking-widest border border-zinc-700">
+            Recompensa em {Math.ceil((100 - adProgress)/20)}s
           </div>
-          <div className="w-full max-w-2xl aspect-video bg-slate-900 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 relative overflow-hidden border border-white/5 shadow-2xl">
-            <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover opacity-30" />
-            <div className="relative z-10 text-center p-8">
-               <div className="w-20 h-20 bg-blue-600 rounded-3xl mx-auto flex items-center justify-center text-white font-black text-4xl italic mb-6 shadow-2xl">E</div>
-               <h3 className="text-3xl font-black tracking-tighter mb-2">ERIE ADS CORE</h3>
-               <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Sincronizando com Google AdSense Server...</p>
-            </div>
-            <div className="absolute bottom-0 left-0 h-2 bg-blue-500 transition-all duration-100" style={{ width: `${adProgress}%` }}></div>
+          
+          <div className="w-full max-w-xl aspect-square md:aspect-video bg-white rounded-lg flex flex-col items-center justify-center relative overflow-hidden shadow-2xl">
+             {/* Container limpo para anúncios automáticos do Google ou Vinhetas */}
+             <div className="text-center p-6 opacity-40">
+                <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.3em] mb-2">Publicidade Google</p>
+                <div className="w-10 h-1 bg-slate-200 mx-auto rounded-full"></div>
+             </div>
+             
+             {/* Barra de progresso da recompensa */}
+             <div className="absolute bottom-0 left-0 h-1.5 bg-blue-600 transition-all duration-100" style={{ width: `${adProgress}%` }}></div>
           </div>
-          <p className="mt-12 text-xs font-black text-blue-500 animate-pulse uppercase tracking-[0.5em]">Processando Recompensa...</p>
+          
+          <p className="mt-8 text-[10px] font-black text-zinc-500 uppercase tracking-[0.5em]">AdSense Secured</p>
         </div>
       )}
     </>
